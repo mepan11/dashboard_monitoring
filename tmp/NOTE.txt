@@ -1,0 +1,36 @@
+dokumentasi
+
+
+1. absensi mandiri tolong tambahkan button "muat" 
+2. perbaiki toast notifikasi "NEXT_REDIRECT" menjadi Berhasil ataupun Gagal suatu action
+
+#Nilai Tugas Harian di Dashboard guru diinputnya persemester/perhari ()
+
+
+Dashboard Admin
+1. menu (Student Profile)
+    - tambahkan Filter lengkap seperti tanggal mulai dan tanggal akhir untuk NIS/NISN, Nama Lengkap, Jenis Kelamin, Kelas, Kontak Orang Tua
+2. menu (Staff Attendance)
+    - ✅
+3. menu (Staff Accounts)
+    - ✅
+4. menu (Extracurriculars)
+    - ✅
+5. menu (Academic Periods)
+    - ✅
+6. menu (Subject)
+    - ✅
+    - jika menambahkan mata pelajaran baru dapat menginput nama guru yang sudah tersedia di "Staff Accounts" 1 pelajaran bisa diajari oleh banyak guru, 1 guru bisa dapat mengajar banyak mata pelajaran, jika memungkinkan mengubah database anda bisa mengubahnya tapi pastikan tidak ada konlfik error pada fitur lain
+7. menu (Classes)
+    - filter lengkap kategori
+8. menu (overview)
+    - ✅
+
+Dashboard guru
+1. menu (Attendance)
+    - untuk absensi murid tidak ada absensi pagi hanya ada absensi mata pelajaran 
+
+2. menu ()
+3.
+4.
+5.

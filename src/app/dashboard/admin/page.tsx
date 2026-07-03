@@ -13,7 +13,7 @@ import {
   createUserAccount, updateUserAccount, deleteUserAccount
 } from '../../../lib/services/userService';
 import { 
-  getStaffAttendanceForDate, recordStaffAttendance 
+  getStaffAttendanceForDate, recordStaffAttendance, getStaffAttendanceHistory
 } from '../../../lib/services/attendanceService';
 import { 
   Users, BookOpen, Calendar, Award, CheckSquare,
@@ -23,13 +23,15 @@ import Link from 'next/link';
 import { DeleteButton } from '../../../components/ui/DeleteButton';
 import { Toast } from '../../../components/ui/Toast';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
+import { AttendanceFilterBar } from '../../../components/ui/AttendanceFilterBar';
+import { SubjectListFilter } from '../../../components/ui/SubjectListFilter';
 
 export const metadata = {
   title: 'Super Admin Dashboard - E-Monitor SD',
 };
 
 export default async function AdminDashboard(props: {
-  searchParams: Promise<{ tab?: string; date?: string; error?: string; success?: string; editId?: string }>;
+  searchParams: Promise<{ tab?: string; date?: string; error?: string; success?: string; editId?: string; startDate?: string; endDate?: string; filterUserId?: string; filterRole?: string }>;
 }) {
   const session = await getSession();
   if (!session || session.role !== 'super_admin') {
@@ -42,6 +44,14 @@ export default async function AdminDashboard(props: {
   const editId = searchParams.editId;
   const errorMsg = searchParams.error;
   const successMsg = searchParams.success;
+
+  // Attendance history filters
+  const today = new Date().toISOString().split('T')[0];
+  const firstOfMonth = today.slice(0, 7) + '-01';
+  const attStartDate = searchParams.startDate || firstOfMonth;
+  const attEndDate = searchParams.endDate || today;
+  const attFilterUserId = searchParams.filterUserId ? parseInt(searchParams.filterUserId, 10) : null;
+  const attFilterRole = searchParams.filterRole || '';
 
   // --- SERVER ACTIONS FOR CRUD ---
 
@@ -280,6 +290,8 @@ export default async function AdminDashboard(props: {
 
   // Attendance
   let staffAttendance = null;
+  let staffAttendanceHistory: any[] = [];
+  let allStaffForFilter: any[] = [];
 
   const [teachersList] = (await pool.query('SELECT u.id, u.name FROM users u JOIN user_roles ur ON u.id = ur.user_id JOIN roles r ON ur.role_id = r.id WHERE r.name = "teacher"')) as any;
   const [coachesList] = (await pool.query('SELECT u.id, u.name FROM users u JOIN user_roles ur ON u.id = ur.user_id JOIN roles r ON ur.role_id = r.id WHERE r.name = "coach"')) as any;
@@ -316,7 +328,16 @@ export default async function AdminDashboard(props: {
     const [stuRaw] = await pool.query('SELECT id, full_name, nis FROM student_profiles WHERE is_active = TRUE ORDER BY full_name ASC');
     students = stuRaw as any[];
   } else if (tab === 'attendance') {
-    staffAttendance = await getStaffAttendanceForDate(currentDate);
+    staffAttendanceHistory = await getStaffAttendanceHistory(attStartDate, attEndDate, attFilterUserId, attFilterRole || null);
+    const [staffRaw] = (await pool.query(`
+      SELECT u.id, u.name, r.name as role_name
+      FROM users u
+      JOIN user_roles ur ON u.id = ur.user_id
+      JOIN roles r ON ur.role_id = r.id
+      WHERE r.name IN ('teacher', 'coach')
+      ORDER BY r.name ASC, u.name ASC
+    `)) as any;
+    allStaffForFilter = staffRaw as any[];
   }
 
   // --- HELPERS FOR EDITING ---
@@ -473,43 +494,8 @@ export default async function AdminDashboard(props: {
       {tab === 'subjects' && (
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 flex flex-col gap-4">
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Daftar Mata Pelajaran</h3>
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
-              <table className="w-full text-left text-sm text-zinc-700 dark:text-zinc-300">
-                <thead className="bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold uppercase text-zinc-650 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800">
-                  <tr>
-                    <th className="px-6 py-4">Kode</th>
-                    <th className="px-6 py-4">Nama Pelajaran</th>
-                    <th className="px-6 py-4">Kategori</th>
-                    <th className="px-6 py-4">Tipe</th>
-                    <th className="px-6 py-4 text-right">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                  {subjects.map((s) => (
-                    <tr key={s.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-850/50">
-                      <td className="px-6 py-4 font-mono font-bold text-indigo-650 dark:text-indigo-400">{s.code}</td>
-                      <td className="px-6 py-4 font-medium">{s.name}</td>
-                      <td className="px-6 py-4">{s.category || '-'}</td>
-                      <td className="px-6 py-4">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${s.is_core ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-450 dark:border-emerald-900/50' : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-450 dark:border-amber-900/50'}`}>
-                          {s.is_core ? 'Inti' : 'Muatan Lokal / Ekskul'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right flex justify-end gap-2">
-                        <Link href={`/dashboard/admin?tab=subjects&editId=${s.id}`} className="p-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-zinc-700 dark:text-zinc-300 rounded-lg">
-                          <Edit2 className="h-4 w-4" />
-                        </Link>
-                        <DeleteButton action={handleSubject} confirmMessage="Yakin ingin menghapus mata pelajaran ini?">
-                          <input type="hidden" name="actionType" value="delete" />
-                          <input type="hidden" name="subjectId" value={s.id} />
-                        </DeleteButton>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Daftar Academic / Non-Academic</h3>
+            <SubjectListFilter subjects={subjects as any[]} handleSubject={handleSubject} />
           </div>
 
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 h-fit shadow-xs">
@@ -537,8 +523,8 @@ export default async function AdminDashboard(props: {
               <div>
                 <label className="block text-sm font-semibold mb-1 text-zinc-700 dark:text-zinc-300">Jenis Pelajaran *</label>
                 <select name="is_core" required defaultValue={editItem ? String(editItem.is_core) : 'true'} className="w-full px-3 py-2 border rounded-lg bg-zinc-50 dark:bg-zinc-950 dark:border-zinc-700 text-zinc-900 dark:text-white text-sm">
-                  <option value="true">Pelajaran Inti (Akademik)</option>
-                  <option value="false">Muatan Lokal / Ekstrakurikuler</option>
+                  <option value="true">Academic (Pelajaran Inti)</option>
+                  <option value="false">Non-Academic (Muatan Lokal / Ekskul)</option>
                 </select>
               </div>
               <div>
@@ -1059,96 +1045,106 @@ export default async function AdminDashboard(props: {
         </div>
       )}
 
-      {/* --- STAFF ATTENDANCE TAB (Super Admin inputs daily attendance for Teachers & Coaches) --- */}
-      {tab === 'attendance' && staffAttendance && (
+      {/* --- STAFF ATTENDANCE HISTORY TAB --- */}
+      {tab === 'attendance' && (
         <div className="flex flex-col gap-6">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Absensi Harian Guru & Staf (Pelatih)</h3>
-              <p className="text-xs text-zinc-500 mt-1">Super Admin memiliki wewenang untuk memasukkan absensi harian staf pendidik.</p>
-            </div>
-            
-            <form method="GET" action="/dashboard/admin" className="flex items-center gap-2">
-              <input type="hidden" name="tab" value="attendance" />
-              <input 
-                type="date" 
-                name="date" 
-                defaultValue={currentDate} 
-                className="px-3 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg text-sm bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white"
-              />
-              <button type="submit" className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-800 dark:hover:bg-zinc-750 rounded-lg text-sm font-semibold cursor-pointer">
-                Pilih Tanggal
-              </button>
-            </form>
+
+          {/* Header */}
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-xs">
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-1">Riwayat Kehadiran Staf</h3>
+            <p className="text-xs text-zinc-500">Pantau riwayat kehadiran guru dan pelatih dalam rentang waktu yang dipilih.</p>
           </div>
 
-          <form action={handleStaffAttendanceSave}>
-            <input type="hidden" name="date" value={currentDate} />
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
-              <table className="w-full text-left text-sm text-zinc-700 dark:text-zinc-300">
-                <thead className="bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold uppercase text-zinc-650 border-b border-zinc-200 dark:border-zinc-800">
-                  <tr>
-                    <th className="px-6 py-4">Nama Staf</th>
-                    <th className="px-6 py-4">Peran (Role)</th>
-                    <th className="px-6 py-4">Status Kehadiran</th>
-                    <th className="px-6 py-4">Catatan (Notes)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                  {staffAttendance.records.map((rec) => (
-                    <tr key={rec.user_id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-850/50">
-                      <td className="px-6 py-4 font-bold">
-                        {rec.name}
-                        <input type="hidden" name="user_ids" value={rec.user_id} />
-                      </td>
-                      <td className="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-zinc-550 dark:text-zinc-450">
-                        {rec.role_name === 'teacher' ? 'Guru' : 'Pelatih (Coach)'}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          {[
-                            { value: 'present', label: 'Hadir' },
-                            { value: 'sick', label: 'Sakit' },
-                            { value: 'permission', label: 'Izin' },
-                            { value: 'absent', label: 'Alpa' }
-                          ].map((opt) => (
-                            <label key={opt.value} className="flex items-center gap-1 cursor-pointer select-none">
-                              <input 
-                                type="radio" 
-                                name={`status_${rec.user_id}`} 
-                                value={opt.value}
-                                defaultChecked={rec.status === opt.value}
-                                className="accent-indigo-600 h-4 w-4"
-                              />
-                              <span>{opt.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <input 
-                          type="text" 
-                          name={`notes_${rec.user_id}`} 
-                          defaultValue={rec.notes || ''}
-                          placeholder="Tulis keterangan jika sakit/izin..."
-                          className="w-full px-3 py-1.5 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white text-xs"
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {/* Filter Bar */}
+          <AttendanceFilterBar
+            allStaff={allStaffForFilter as any[]}
+            defaultStartDate={attStartDate}
+            defaultEndDate={attEndDate}
+            defaultFilterRole={attFilterRole}
+            defaultFilterUserId={attFilterUserId}
+          />
 
-            <div className="flex justify-end mt-4">
-              <button 
-                type="submit" 
-                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/15 cursor-pointer"
-              >
-                Simpan Absensi Harian Staf
-              </button>
+          {/* Summary Cards */}
+          {staffAttendanceHistory.length > 0 && (() => {
+            const presentCount = staffAttendanceHistory.filter(r => r.status === 'present').length;
+            const sickCount = staffAttendanceHistory.filter(r => r.status === 'sick').length;
+            const permCount = staffAttendanceHistory.filter(r => r.status === 'permission').length;
+            const absentCount = staffAttendanceHistory.filter(r => r.status === 'absent').length;
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[
+                  { label: 'Hadir', count: presentCount, color: 'emerald' },
+                  { label: 'Sakit', count: sickCount, color: 'amber' },
+                  { label: 'Izin', count: permCount, color: 'blue' },
+                  { label: 'Alpa', count: absentCount, color: 'red' },
+                ].map(item => (
+                  <div key={item.label} className={`bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-5 shadow-xs`}>
+                    <span className="text-xs font-bold text-zinc-400 uppercase block mb-1">{item.label}</span>
+                    <span className={`text-3xl font-extrabold text-${item.color}-600 dark:text-${item.color}-400`}>{item.count}</span>
+                    <span className="text-xs text-zinc-400 ml-1">sesi</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          {/* History Table */}
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-xs">
+            <div className="px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+              <span className="font-bold text-zinc-800 dark:text-white text-sm">
+                {staffAttendanceHistory.length} Rekaman Kehadiran
+              </span>
+              <span className="text-xs text-zinc-400">{attStartDate} s/d {attEndDate}</span>
             </div>
-          </form>
+            {staffAttendanceHistory.length === 0 ? (
+              <div className="p-12 text-center text-zinc-400 text-sm">
+                Tidak ada data kehadiran untuk filter yang dipilih.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm text-zinc-700 dark:text-zinc-300">
+                  <thead className="bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold uppercase text-zinc-500 border-b border-zinc-200 dark:border-zinc-800">
+                    <tr>
+                      <th className="px-6 py-3">Tanggal</th>
+                      <th className="px-6 py-3">Nama Staf</th>
+                      <th className="px-6 py-3">Peran</th>
+                      <th className="px-6 py-3">Status</th>
+                      <th className="px-6 py-3">Catatan</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {staffAttendanceHistory.map((rec: any, idx: number) => {
+                      const statusMap: Record<string, { label: string; cls: string }> = {
+                        present:    { label: 'Hadir',  cls: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' },
+                        sick:       { label: 'Sakit',  cls: 'bg-amber-100  text-amber-700  dark:bg-amber-950/40  dark:text-amber-400'  },
+                        permission: { label: 'Izin',   cls: 'bg-blue-100   text-blue-700   dark:bg-blue-950/40   dark:text-blue-400'   },
+                        absent:     { label: 'Alpa',   cls: 'bg-red-100    text-red-700    dark:bg-red-950/40    dark:text-red-400'    },
+                        late:       { label: 'Terlambat', cls: 'bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-400' },
+                      };
+                      const s = statusMap[rec.status] ?? { label: rec.status, cls: 'bg-zinc-100 text-zinc-600' };
+                      return (
+                        <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
+                          <td className="px-6 py-3 font-mono text-xs text-zinc-500">
+                            {new Date(rec.session_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </td>
+                          <td className="px-6 py-3 font-semibold text-zinc-900 dark:text-white">{rec.user_name}</td>
+                          <td className="px-6 py-3 text-xs font-semibold uppercase text-zinc-400">
+                            {rec.role_name === 'teacher' ? 'Guru' : 'Pelatih'}
+                          </td>
+                          <td className="px-6 py-3">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${s.cls}`}>
+                              {s.label}
+                            </span>
+                          </td>
+                          <td className="px-6 py-3 text-xs text-zinc-500 italic">{rec.notes || '—'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

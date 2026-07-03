@@ -182,6 +182,47 @@ export async function getStaffAttendanceForDate(sessionDate: string) {
   return { sessionId, records: records as any[] };
 }
 
+export async function getStaffAttendanceHistory(
+  startDate: string,
+  endDate: string,
+  userIdFilter?: number | null,
+  roleFilter?: string | null
+) {
+  const params: any[] = [startDate, endDate];
+  const conditions: string[] = [];
+
+  if (userIdFilter) {
+    conditions.push('AND u.id = ?');
+    params.push(userIdFilter);
+  }
+  if (roleFilter && (roleFilter === 'teacher' || roleFilter === 'coach')) {
+    conditions.push('AND r.name = ?');
+    params.push(roleFilter);
+  }
+
+  const [rows] = await pool.query(
+    `SELECT
+       asess.session_date,
+       u.id as user_id,
+       u.name as user_name,
+       r.name as role_name,
+       ar.status,
+       ar.notes
+     FROM attendance_sessions asess
+     JOIN attendance_records ar ON ar.session_id = asess.id
+     JOIN users u ON ar.user_id = u.id
+     JOIN user_roles ur ON u.id = ur.user_id
+     JOIN roles r ON ur.role_id = r.id
+     WHERE asess.session_type = 'staff'
+       AND asess.class_id IS NULL
+       AND asess.session_date BETWEEN ? AND ?
+       ${conditions.join(' ')}
+     ORDER BY asess.session_date DESC, r.name ASC, u.name ASC`,
+    params
+  );
+  return rows as any[];
+}
+
 export async function getStaffSelfAttendanceHistory(userId: number) {
   const [rows] = await pool.query(
     `SELECT 
