@@ -1,10 +1,12 @@
-CREATE TABLE roles (
+-- Primary School Dashboard Monitoring System Database Schema
+
+CREATE TABLE IF NOT EXISTS roles (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(30) UNIQUE NOT NULL COMMENT 'super_admin, principal, teacher, parent, coach',
     description VARCHAR(100) NULL
 );
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -20,7 +22,7 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE user_roles (
+CREATE TABLE IF NOT EXISTS user_roles (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     role_id INT NOT NULL,
@@ -30,7 +32,7 @@ CREATE TABLE user_roles (
     UNIQUE KEY unique_user_role (user_id, role_id)
 );
 
-CREATE TABLE classes (
+CREATE TABLE IF NOT EXISTS classes (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(10) NOT NULL COMMENT 'Misal: 1A, 6B',
     grade_level TINYINT NOT NULL CHECK (grade_level BETWEEN 1 AND 6),
@@ -41,7 +43,7 @@ CREATE TABLE classes (
     FOREIGN KEY (homeroom_teacher_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
-CREATE TABLE student_profiles (
+CREATE TABLE IF NOT EXISTS student_profiles (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NULL COMMENT 'Bisa NULL jika murid tidak punya akun login',
     nis VARCHAR(20) UNIQUE NOT NULL,
@@ -59,7 +61,7 @@ CREATE TABLE student_profiles (
     FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
 );
 
-CREATE TABLE subjects (
+CREATE TABLE IF NOT EXISTS subjects (
     id INT PRIMARY KEY AUTO_INCREMENT,
     code VARCHAR(10) UNIQUE NOT NULL COMMENT 'Kode: MTK, BINDO, IPA, IPS, dst.',
     name VARCHAR(100) NOT NULL,
@@ -72,7 +74,7 @@ CREATE TABLE subjects (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE academic_periods (
+CREATE TABLE IF NOT EXISTS academic_periods (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(30) NOT NULL COMMENT 'Misal: 2025/2026 Ganjil',
     academic_year VARCHAR(9) NOT NULL COMMENT '2025/2026',
@@ -83,7 +85,7 @@ CREATE TABLE academic_periods (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE extracurriculars (
+CREATE TABLE IF NOT EXISTS extracurriculars (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL COMMENT 'Pramuka, Futsal, Seni Tari, dst.',
     coach_id INT NOT NULL COMMENT 'FK ke users (role coach)',
@@ -94,7 +96,7 @@ CREATE TABLE extracurriculars (
     FOREIGN KEY (coach_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE teacher_subjects (
+CREATE TABLE IF NOT EXISTS teacher_subjects (
     id INT PRIMARY KEY AUTO_INCREMENT,
     teacher_id INT NOT NULL,
     subject_id INT NOT NULL,
@@ -106,13 +108,13 @@ CREATE TABLE teacher_subjects (
     UNIQUE KEY unique_teacher_subject_class (teacher_id, subject_id, class_id)
 );
 
-CREATE TABLE attendance_sessions (
+CREATE TABLE IF NOT EXISTS attendance_sessions (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    class_id INT NOT NULL,
+    class_id INT NULL, -- NULL for staff attendance
     subject_id INT NULL COMMENT 'NULL jika absen pagi (daily)',
-    teacher_id INT NOT NULL COMMENT 'Guru yang melakukan absensi',
+    teacher_id INT NOT NULL COMMENT 'Guru/User yang melakukan absensi',
     session_date DATE NOT NULL,
-    session_type ENUM('daily', 'subject') NOT NULL DEFAULT 'daily',
+    session_type ENUM('daily', 'subject', 'staff') NOT NULL DEFAULT 'daily',
     start_time TIME NULL,
     end_time TIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -121,23 +123,26 @@ CREATE TABLE attendance_sessions (
     FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE attendance_records (
+CREATE TABLE IF NOT EXISTS attendance_records (
     id INT PRIMARY KEY AUTO_INCREMENT,
     session_id INT NOT NULL,
-    student_id INT NOT NULL,
+    student_id INT NULL, -- NULL for staff attendance
+    user_id INT NULL,    -- Populated with teacher/coach user ID for staff attendance
     status ENUM('present', 'sick', 'permission', 'absent', 'late') NOT NULL,
     arrival_time TIME NULL COMMENT 'Diisi jika status = late',
     notes TEXT NULL,
-    recorded_by INT NOT NULL COMMENT 'User yang mencatat (bisa guru/admin)',
+    recorded_by INT NOT NULL COMMENT 'User yang mencatat (bisa guru/admin/self)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (session_id) REFERENCES attendance_sessions(id) ON DELETE CASCADE,
     FOREIGN KEY (student_id) REFERENCES student_profiles(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (recorded_by) REFERENCES users(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_attendance_record (session_id, student_id)
+    UNIQUE KEY unique_attendance_record_student (session_id, student_id),
+    UNIQUE KEY unique_attendance_record_user (session_id, user_id)
 );
 
-CREATE TABLE grades (
+CREATE TABLE IF NOT EXISTS grades (
     id INT PRIMARY KEY AUTO_INCREMENT,
     student_id INT NOT NULL,
     subject_id INT NOT NULL,
@@ -156,7 +161,7 @@ CREATE TABLE grades (
     UNIQUE KEY unique_grade (student_id, subject_id, period_id, type)
 );
 
-CREATE TABLE ekskul_attendances (
+CREATE TABLE IF NOT EXISTS ekskul_attendances (
     id INT PRIMARY KEY AUTO_INCREMENT,
     extracurricular_id INT NOT NULL,
     student_id INT NOT NULL,
@@ -172,10 +177,7 @@ CREATE TABLE ekskul_attendances (
     UNIQUE KEY unique_ekskul_attendance (extracurricular_id, student_id, session_date)
 );
 
-
--- 
-
-CREATE TABLE parent_profiles (
+CREATE TABLE IF NOT EXISTS parent_profiles (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT UNIQUE NOT NULL COMMENT '1 akun login per orang tua',
     occupation VARCHAR(100) NULL,
@@ -187,7 +189,7 @@ CREATE TABLE parent_profiles (
     FOREIGN KEY (student_id) REFERENCES student_profiles(id) ON DELETE CASCADE
 );
 
-CREATE TABLE principal_profiles (
+CREATE TABLE IF NOT EXISTS principal_profiles (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT UNIQUE NOT NULL,
     nuptk VARCHAR(16) NULL COMMENT 'Kepsek biasanya juga guru, bisa punya NUPTK',
@@ -198,7 +200,7 @@ CREATE TABLE principal_profiles (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE coach_profiles (
+CREATE TABLE IF NOT EXISTS coach_profiles (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT UNIQUE NOT NULL,
     expertise_field VARCHAR(100) NULL COMMENT 'Bidang keahlian, misal: Olahraga, Musik, Pramuka',
@@ -208,7 +210,7 @@ CREATE TABLE coach_profiles (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE admin_profiles (
+CREATE TABLE IF NOT EXISTS admin_profiles (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT UNIQUE NOT NULL,
     nik VARCHAR(16) UNIQUE NULL COMMENT 'Nomor KTP',
@@ -219,7 +221,7 @@ CREATE TABLE admin_profiles (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE teacher_profiles (
+CREATE TABLE IF NOT EXISTS teacher_profiles (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT UNIQUE NOT NULL,
     nuptk VARCHAR(16) UNIQUE NOT NULL COMMENT 'Nomor Unik Guru (16 digit)',
@@ -228,4 +230,33 @@ CREATE TABLE teacher_profiles (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Store teacher's lesson summaries and records
+CREATE TABLE IF NOT EXISTS lesson_logs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    teacher_id INT NOT NULL,
+    subject_id INT NOT NULL,
+    class_id INT NOT NULL,
+    topic VARCHAR(255) NOT NULL COMMENT 'Materi yang dipelajari',
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    duration_minutes INT NOT NULL COMMENT 'Jumlah jam belajar dalam menit',
+    summary TEXT NOT NULL COMMENT 'Rangkuman materi',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+);
+
+-- Store coach's extracurricular activity logs
+CREATE TABLE IF NOT EXISTS ekskul_logs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    extracurricular_id INT NOT NULL,
+    activity_date DATE NOT NULL,
+    activity_name VARCHAR(255) NOT NULL COMMENT 'Nama kegiatan/materi latihan',
+    description TEXT NULL COMMENT 'Deskripsi/rekap kegiatan',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (extracurricular_id) REFERENCES extracurriculars(id) ON DELETE CASCADE
 );
