@@ -1,0 +1,64 @@
+buatkan sistem dashboard monitoring sekolah tingkat sekolah dasar (SD) dengan aktor antara lain :
+1. murid (student_profiles)
+2. wali murid (parent_profiles) 
+3. guru (teachers_profiles)
+4. kepala sekolah (principal_profiles)
+5. super admin (admin_profiles)
+
+fiturnya ini mempunyai fungsi-fungsi sesuai dengan role nya masing masing antara lain : 
+1. guru (teacher_profiles)
+    a. melakukan input dan melihat nilai murid (student_profiles) (Tugas harian seperti pengerjaan buku LKS IPA pada halaman sekian , UTS, UAS) 
+    b. melakukan absensi dan melihat absensinya terhadap dirinya sendiri (teacher_profiles) dan murid (student_profiles)
+    c. bisa upload dan melihat materi pelajaran (contoh guru akan menginput :
+    - Guru yang mengajar: Subandi
+    - Nama mata pelajaran: IPA
+    - Materi yang dipelajari: Proses Erosi
+    - Jam mulai dan jam berakhir pelajaran.
+    - Jumlah jam belajar: 1 jam 30 menit
+    - Rangkuman: proses erosi adalah ...
+    ) lalu outputnya bisa berupa seperti list table history pelajaran dengan action download pdf
+
+2. kepala sekolah (principal_profiles)
+    a. bisa melihat nilai murid(student_profiles)
+    b. bisa melihat absensi murid(student_profiles)
+    c. bisa melihat absensi guru(teacher_profiles)
+    d. bisa melihat rekap nilai murid dari awal semester hingga periode semester yang dipilih (student_profiles)
+
+3. wali murid (parent_profiles)
+    a. bisa melihat nilai anaknya (student_profiles)
+    b. bisa melihat absensi anaknya (student_profiles)
+    c. bisa melihat rekap nilai anaknya dari awal semester hingga periode semester yang dipilih (student_profiles)
+    d. bisa melihat data nama guru yang mengajar anaknya (teacher_profiles)
+    e. bisa melihat mata pelajaran yang di tempuh oleh anakanya (student_profiles)
+    d. bisa melihat absensi ekskul anaknya (student_profiles) dari coach (coach_profiles)
+    
+4. admin (admin_profiles)
+    a. bisa memiliki akses penuh terhadap sistem dan memiliki semua fitur yang dimiliki oleh semua role
+    b. bisa melakukan CRUD akun guru (sesuai dengan jumlah guru yang ada), kepala sekolah (hanya satu akun), wali murid (sesuai dengan jumlah anakanya yang sekolah di sekolah dasar (SD) ), coach (sesuai dengan jumlah pembimbing ekskul disekolah)
+
+5. coach (coach_profiles)
+    a. bisa melakukan absensi dan melihat absensinya terhadap dirinya sendiri (coach_profiles) dan murid (student_profiles)
+    b. bisa input rekap kegiatan ekskul yang sedang berjalan
+    c. tembahkan di table subjeck code dan nama pelajaran yaitu ekstrakulikuler yang mana sebagai tempat menampung nama mata pelajaran ekstrakulikuler di raport dan untuk nilai nya di isi ditable grades
+
+    berikut sedikit penggunaan table pada database yang sekira nya saya bayangkan :
+    roles ->
+    users -> 
+    user_roles ->
+    classes -> diinput oleh superadmin
+    subjects -> diinput oleh superadmin
+    acedemic_periods -> diinput oleh superadmin
+    extracurriculars -> diinput oleh superadmin
+    teacher_profiles -> bisa diinput oleh superadmin & guru
+    teacher_subjects -> bisa diinput oleh superadmin & guru
+    attendance_sessions -> diinput oleh guru
+    attendance_records -> diinput oleh guru untuk murid
+    grades -> diinput oleh guru
+    ekskul_attendances -> diinput oleh coach
+    student_profiles -> diinput oleh superadmin
+    parent_profiles -> diinput oleh wali murid (self register)
+    principal_profiles -> diinput oleh superadmin, bisa diedit oleh kepala sekolah
+    coach_profiles -> diinput oleh superadmin, bisa diedit oleh coach
+    admin_profiles -> (seed)    
+    
+    untuk table tolong sediakan dan buat seed untuk tiap table agar memudahkan untuk login ke aplikasi database yang digunakan menggunakan mysql 
