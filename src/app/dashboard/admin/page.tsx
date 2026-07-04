@@ -24,7 +24,6 @@ import { DeleteButton } from '../../../components/ui/DeleteButton';
 import { Toast } from '../../../components/ui/Toast';
 import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { AttendanceFilterBar } from '../../../components/ui/AttendanceFilterBar';
-import { SubjectListFilter } from '../../../components/ui/SubjectListFilter';
 
 export const metadata = {
   title: 'Super Admin Dashboard - E-Monitor SD',
@@ -494,8 +493,43 @@ export default async function AdminDashboard(props: {
       {tab === 'subjects' && (
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 flex flex-col gap-4">
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Daftar Academic / Non-Academic</h3>
-            <SubjectListFilter subjects={subjects as any[]} handleSubject={handleSubject} />
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Daftar Mata Pelajaran</h3>
+            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+              <table className="w-full text-left text-sm text-zinc-700 dark:text-zinc-300">
+                <thead className="bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold uppercase text-zinc-650 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800">
+                  <tr>
+                    <th className="px-6 py-4">Kode</th>
+                    <th className="px-6 py-4">Nama Pelajaran</th>
+                    <th className="px-6 py-4">Kategori</th>
+                    <th className="px-6 py-4">Tipe</th>
+                    <th className="px-6 py-4 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {subjects.map((s) => (
+                    <tr key={s.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-850/50">
+                      <td className="px-6 py-4 font-mono font-bold text-indigo-650 dark:text-indigo-400">{s.code}</td>
+                      <td className="px-6 py-4 font-medium">{s.name}</td>
+                      <td className="px-6 py-4">{s.category || '-'}</td>
+                      <td className="px-6 py-4">
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${s.is_core ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-450 dark:border-emerald-900/50' : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-450 dark:border-amber-900/50'}`}>
+                          {s.is_core ? 'Inti' : 'Muatan Lokal / Ekskul'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right flex justify-end gap-2">
+                        <Link href={`/dashboard/admin?tab=subjects&editId=${s.id}`} className="p-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-zinc-700 dark:text-zinc-300 rounded-lg">
+                          <Edit2 className="h-4 w-4" />
+                        </Link>
+                        <DeleteButton action={handleSubject} confirmMessage="Yakin ingin menghapus mata pelajaran ini?">
+                          <input type="hidden" name="actionType" value="delete" />
+                          <input type="hidden" name="subjectId" value={s.id} />
+                        </DeleteButton>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-6 h-fit shadow-xs">
@@ -523,8 +557,8 @@ export default async function AdminDashboard(props: {
               <div>
                 <label className="block text-sm font-semibold mb-1 text-zinc-700 dark:text-zinc-300">Jenis Pelajaran *</label>
                 <select name="is_core" required defaultValue={editItem ? String(editItem.is_core) : 'true'} className="w-full px-3 py-2 border rounded-lg bg-zinc-50 dark:bg-zinc-950 dark:border-zinc-700 text-zinc-900 dark:text-white text-sm">
-                  <option value="true">Academic (Pelajaran Inti)</option>
-                  <option value="false">Non-Academic (Muatan Lokal / Ekskul)</option>
+                  <option value="true">Pelajaran Inti (Akademik)</option>
+                  <option value="false">Muatan Lokal / Ekstrakurikuler</option>
                 </select>
               </div>
               <div>
