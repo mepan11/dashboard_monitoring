@@ -1,8 +1,47 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import pool from '../../../../lib/db';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const classId = searchParams.get('classId');
+
+    if (classId) {
+      // Export students of specific class
+      const [classNameRows] = await pool.query('SELECT name FROM classes WHERE id = ?', [classId]) as any[];
+      const className = classNameRows.length > 0 ? classNameRows[0].name : `ID_${classId}`;
+
+      const [students] = await pool.query(`
+        SELECT nis, nisn, full_name, gender, is_active
+        FROM student_profiles
+        WHERE class_id = ?
+        ORDER BY full_name ASC
+      `, [classId]) as any[];
+
+      const headers = ['No', 'Nama Siswa', 'NIS', 'NISN', 'Jenis Kelamin', 'Status Keaktifan'];
+      const rows = students.map((s: any, idx: number) => [
+        idx + 1,
+        s.full_name,
+        s.nis,
+        s.nisn || '—',
+        s.gender === 'male' ? 'Laki-laki' : 'Perempuan',
+        s.is_active ? 'Aktif' : 'Non-aktif'
+      ]);
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map((row: any[]) => row.map((val: any) => `"${String(val).replace(/"/g, '""')}"`).join(','))
+      ].join('\r\n');
+
+      const BOM = '\uFEFF';
+      return new NextResponse(BOM + csvContent, {
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': `attachment; filename="daftar_siswa_kelas_${className}.csv"`,
+        },
+      });
+    }
+
     const [classes] = await pool.query(`
       SELECT c.id, c.name, c.grade_level, u.name as homeroom_teacher_name,
              (SELECT COUNT(*) FROM student_profiles sp WHERE sp.class_id = c.id) as student_count

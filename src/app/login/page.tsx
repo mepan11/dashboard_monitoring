@@ -108,8 +108,8 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
                 <span className="block text-zinc-400 font-mono">principal123</span>
               </div>
               <div className="p-2 bg-zinc-50 dark:bg-zinc-950 rounded-lg border border-zinc-100 dark:border-zinc-900">
-                <span className="font-semibold block text-emerald-600 dark:text-emerald-450">Guru IPA (Kelas 4)</span>
-                <span>guru2@school.sch.id</span>
+                <span className="font-semibold block text-emerald-600 dark:text-emerald-450">Guru (Ibu Sarah Wijaya)</span>
+                <span>guru1@school.sch.id</span>
                 <span className="block text-zinc-400 font-mono">teacher123</span>
               </div>
               <div className="p-2 bg-zinc-50 dark:bg-zinc-950 rounded-lg border border-zinc-100 dark:border-zinc-900">

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { 
   Home, BookOpen, Users, Calendar, Award, 
-  FileText, CheckSquare, Settings, LogOut, Menu, X, BookOpenCheck
+  FileText, CheckSquare, Settings, LogOut, Menu, X, BookOpenCheck, HelpCircle
 } from 'lucide-react';
 
 interface SidebarLink {
@@ -42,9 +42,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, userName, onLogout }) =>
       case 'teacher':
         return [
           { label: 'Dashboard', href: '/dashboard/teacher', icon: Home },
-          { label: 'Student Grades', href: '/dashboard/teacher?tab=grades', icon: Award },
-          { label: 'Attendances', href: '/dashboard/teacher?tab=attendance', icon: CheckSquare },
-          { label: 'Lesson Logs (Journal)', href: '/dashboard/teacher?tab=logs', icon: FileText },
+          { label: 'My Classes', href: '/dashboard/teacher?tab=classes', icon: Users },
+          { label: 'Attendance', href: '/dashboard/teacher?tab=attendance', icon: CheckSquare },
+          { label: 'Progress', href: '/dashboard/teacher?tab=progress', icon: Award },
+          { label: 'Settings', href: '/dashboard/teacher?tab=settings', icon: Settings },
+          { label: 'Help', href: '/dashboard/teacher?tab=help', icon: HelpCircle },
         ];
       case 'principal':
         return [
@@ -101,8 +103,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, userName, onLogout }) =>
       {/* Mobile Toggle Header */}
       <div className="lg:hidden flex items-center justify-between p-4 bg-zinc-950 text-white border-b border-zinc-800">
         <div className="flex items-center gap-2">
-          <BookOpen className="h-6 w-6 text-indigo-500" />
-          <span className="font-bold tracking-tight text-lg">Sistem Monitoring SD</span>
+          <BookOpen className="h-6 w-6 text-blue-500" />
+          <span className="font-bold tracking-tight text-lg text-white">EduPulse Primary</span>
         </div>
         <button onClick={() => setIsOpen(!isOpen)} className="p-1 rounded-lg hover:bg-zinc-800 transition-colors">
           {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -118,10 +120,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, userName, onLogout }) =>
         {/* Brand / Logo */}
         <div>
           <div className="hidden lg:flex items-center gap-2 p-6 border-b border-zinc-900">
-            <BookOpen className="h-8 w-8 text-indigo-500" />
+            <BookOpen className="h-8 w-8 text-blue-500" />
             <div className="flex flex-col">
-              <span className="font-bold text-white tracking-tight leading-tight">Monitoring</span>
-              <span className="text-xs text-zinc-500">Sekolah Dasar</span>
+              <span className="font-black text-white tracking-tight leading-tight text-base">EduPulse Primary</span>
+              <span className="text-[10px] text-zinc-550 uppercase tracking-widest mt-0.5">Sistem Akademik</span>
             </div>
           </div>
 
