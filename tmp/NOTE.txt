@@ -34,3 +34,46 @@ Dashboard guru
 3.
 4.
 5.
+
+Pada Academic Periods untuk melihat Kalender Pendidikan buatkan Kalender Pendidikannya lebih jelas dan perinci seperti Hari apa libur, bulan apa hingga seperti Kalender Tahunan
+
+buatkan tampilan dashboard pada aktor guru seperti gambar mockup1 yang saya berikan, dengan tambahan fitur sebagai berikut:
+1. modifikasi database jika diperlukan
+2. CRUD Siswa baru
+3. Memberikan Pengumuman Terhadap Wali murid
+4. melakukan kehadiran mengajar
+5. dapat menerima pesan/bertanya/masukan dari wali murid
+6. informasi dari admin tentang sekolah
+7. jika guru terdapat menjadi wali kelas maka dapat mengakses fitur wali kelas
+
+
+buat fitur [gambar mockup.png] dan modifikasi database jika diperlukan
+
+buatkan saya mockup untuk dashboard monitoring aktivitas akademik dan non-akademik terdapat beberapa aktor yaitu Admin, Kepala Sekolah, Guru, Coach, Wali Murid. berikut apa saja fitur yang terdapat di admin
+
+
+Admin
+- dapat CRUD akun Kepala Sekolah, Guru, Coach, Wali Murid
+- CRUD aktivitas akademik dan non-akademik
+- kalender pendidikan
+
+Kepala Sekolah
+- view absensi siswa dan guru serta coach
+- view laporan absensi siswa dan guru serta coach
+- view laporan nilai tugas harian, UTS, UAS
+- kalender pendidikan
+
+Guru
+- menginput absensi dirinya sendiri maupun siswa yang di ajari
+- menginput nilai Tugas Harian, UTS, UAS
+- view kalender pendidikan
+
+Coach
+- menginput absensi siswa dan dirinya sendiri
+- view laporan absensi siswa
+- kalender pendidikan
+
+Wali Murid
+- view absensi siswa
+- view nilai siswa
+- kalender pendidikan

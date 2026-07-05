@@ -150,7 +150,7 @@ export async function getStudents() {
   const [rows] = await pool.query(`
     SELECT s.id, s.nis, s.nisn, s.full_name, s.class_id, s.gender, s.birth_date, s.address, s.parent_phone, s.is_active, c.name as class_name
     FROM student_profiles s
-    JOIN classes c ON s.class_id = c.id
+    LEFT JOIN classes c ON s.class_id = c.id
     ORDER BY c.grade_level ASC, c.name ASC, s.full_name ASC
   `);
   return rows as any[];

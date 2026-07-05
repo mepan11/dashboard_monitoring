@@ -30,7 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, userName, onLogout }) =>
     switch (userRole) {
       case 'super_admin':
         return [
-          { label: 'Overview', href: '/dashboard/admin', icon: Home },
+          { label: 'Dashboard', href: '/dashboard/admin', icon: Home },
           { label: 'Classes', href: '/dashboard/admin?tab=classes', icon: Users },
           { label: 'Subjects', href: '/dashboard/admin?tab=subjects', icon: BookOpen },
           { label: 'Academic Periods', href: '/dashboard/admin?tab=periods', icon: Calendar },
@@ -41,14 +41,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, userName, onLogout }) =>
         ];
       case 'teacher':
         return [
-          { label: 'Overview', href: '/dashboard/teacher', icon: Home },
+          { label: 'Dashboard', href: '/dashboard/teacher', icon: Home },
           { label: 'Student Grades', href: '/dashboard/teacher?tab=grades', icon: Award },
           { label: 'Attendances', href: '/dashboard/teacher?tab=attendance', icon: CheckSquare },
           { label: 'Lesson Logs (Journal)', href: '/dashboard/teacher?tab=logs', icon: FileText },
         ];
       case 'principal':
         return [
-          { label: 'Overview', href: '/dashboard/principal', icon: Home },
+          { label: 'Dashboard', href: '/dashboard/principal', icon: Home },
           { label: 'Student Grades', href: '/dashboard/principal?tab=grades', icon: Award },
           { label: 'Student Attendance', href: '/dashboard/principal?tab=attendance_student', icon: CheckSquare },
           { label: 'Staff Attendance', href: '/dashboard/principal?tab=attendance_staff', icon: Calendar },
@@ -56,14 +56,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, userName, onLogout }) =>
         ];
       case 'parent':
         return [
-          { label: 'Overview', href: '/dashboard/parent', icon: Home },
+          { label: 'Dashboard', href: '/dashboard/parent', icon: Home },
           { label: 'Report Card (Grades)', href: '/dashboard/parent?tab=grades', icon: Award },
           { label: 'Attendance Records', href: '/dashboard/parent?tab=attendance', icon: CheckSquare },
           { label: 'Teachers & Subjects', href: '/dashboard/parent?tab=teachers', icon: BookOpenCheck },
         ];
       case 'coach':
         return [
-          { label: 'Overview', href: '/dashboard/coach', icon: Home },
+          { label: 'Dashboard', href: '/dashboard/coach', icon: Home },
           { label: 'Ekskul Attendance', href: '/dashboard/coach?tab=attendance', icon: CheckSquare },
           { label: 'Activity Logs', href: '/dashboard/coach?tab=logs', icon: FileText },
         ];
